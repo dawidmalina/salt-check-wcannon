@@ -845,6 +845,7 @@ class StateTestLoader(object):
         self.test_files = []
         filepath = filepath + os.sep + 'saltcheck-tests'
         for dirname, dummy, filelist in salt.utils.path.os_walk(filepath):
+            filelist.sort()
             for fname in filelist:
                 if fname.endswith('.tst'):
                     start_path = dirname + os.sep + fname
