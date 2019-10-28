@@ -376,7 +376,7 @@ def _generate_out_list(results):
     out_list = []
     for key, value in results.items():
         out_list.append({key: value})
-    out_list.sort()
+    out_list.sort(key=lambda x: list(x.keys())[0], reverse=False)
     out_list.append({'TEST RESULTS': {'Execution Time': round(total_time, 4),
                                       'Passed': passed, 'Failed': failed, 'Skipped': skipped,
                                       'Missing Tests': missing_tests}})
@@ -538,7 +538,7 @@ class SaltCheck(object):
         except Exception:
             raise
         if isinstance(value, dict) and assertion_section:
-            return value.get(assertion_section, False)
+            return str(value.get(assertion_section, False))
         else:
             return value
 
