@@ -317,9 +317,11 @@ def run_state_tests(state, saltenv=None, check_all=False):
     return _generate_out_list(results)
 
 
-def run_highstate_tests(saltenv=None):
+def run_highstate_tests(saltenv=None, check_all=False):
     '''
     Execute all tests for states assigned to the minion through highstate and return results
+    
+    :param bool check_all: boolean to run all tests in state/saltcheck-tests directory
 
     CLI Example:
 
@@ -342,7 +344,7 @@ def run_highstate_tests(saltenv=None):
             all_states.append(state)
 
     for state_name in all_states:
-        stl.add_test_files_for_sls(state_name)
+        stl.add_test_files_for_sls(state_name, check_all)
         stl.load_test_suite()
         results_dict = OrderedDict()
         for key, value in stl.test_dict.items():
