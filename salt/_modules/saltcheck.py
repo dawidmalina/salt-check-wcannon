@@ -73,6 +73,9 @@ Saltcheck Keywords
 **pillar-data:**
     (dict) Optional keyword for passing in pillar data. Intended for use in potential test
     setup or teardown with the ``saltcheck.state_apply`` function.
+**grain-data:**
+    (dict) Optional keyword for passing in grain data. Intended for use in potential test
+    setup or teardown with the ``saltcheck.state_apply`` function.
 **skip:**
     (bool) Optional keyword to skip running the individual test
 
@@ -118,6 +121,26 @@ Example with setup state including pillar
         - common
       pillar-data:
         data: value
+
+    verify_vim:
+      module_and_function: pkg.version
+      args:
+        - vim
+      assertion: assertNotEmpty
+
+Example with setup state including grain
+-----------------------------------------
+
+.. code-block:: yaml
+
+    setup_test_environment:
+      module_and_function: saltcheck.state_apply
+      args:
+        - common
+      grain-data:
+        roles:
+          - minion
+          - database
 
     verify_vim:
       module_and_function: pkg.version
@@ -278,6 +301,11 @@ def state_apply(state_name, **kwargs):
     # If the minion is running with a master, a non-local client is needed to lookup states
     caller = salt.client.Caller()
     if kwargs:
+        grains_data = kwargs['grain']
+        if grains_data:
+            log.debug("applying custom grains: %s", grains_data)
+            for k, v in grains_data.items():
+                caller.cmd('grains.setval', k, v)
         return caller.cmd('state.apply', state_name, **kwargs)
     else:
         return caller.cmd('state.apply', state_name)
@@ -320,7 +348,7 @@ def run_state_tests(state, saltenv=None, check_all=False):
 def run_highstate_tests(saltenv=None, check_all=False):
     '''
     Execute all tests for states assigned to the minion through highstate and return results
-    
+
     :param bool check_all: boolean to run all tests in state/saltcheck-tests directory
 
     CLI Example:
@@ -559,6 +587,7 @@ class SaltCheck(object):
             args = test_dict.get('args', None)
             kwargs = test_dict.get('kwargs', None)
             pillar_data = test_dict.get('pillar-data', None)
+            grain_data = test_dict.get('grain-data', None)
             if pillar_data:
                 if not kwargs:
                     kwargs = {}
@@ -567,6 +596,14 @@ class SaltCheck(object):
                 # make sure we clean pillar from previous test
                 if kwargs:
                     kwargs.pop('pillar', None)
+            if grain_data:
+                if not kwargs:
+                    kwargs = {}
+                kwargs['grain'] = grain_data
+            else:
+                # make sure we clean grain from previous test
+                if kwargs:
+                    kwargs.pop('grain', None)
 
             if mod_and_func in ["saltcheck.state_apply"]:
                 assertion = "assertNotEmpty"
