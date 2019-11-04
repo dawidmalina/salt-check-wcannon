@@ -301,7 +301,7 @@ def state_apply(state_name, **kwargs):
     # If the minion is running with a master, a non-local client is needed to lookup states
     caller = salt.client.Caller()
     if kwargs:
-        grains_data = kwargs['grain']
+        grains_data = kwargs.get('grain', None)
         if grains_data:
             log.debug("applying custom grains: %s", grains_data)
             for k, v in grains_data.items():
@@ -585,25 +585,25 @@ class SaltCheck(object):
             mod_and_func = test_dict['module_and_function']
             assertion_section = test_dict.get('assertion_section', None)
             args = test_dict.get('args', None)
-            kwargs = test_dict.get('kwargs', None)
-            pillar_data = test_dict.get('pillar-data', None)
-            grain_data = test_dict.get('grain-data', None)
+            kwargs = test_dict.get('kwargs', {})
+            if not kwargs:
+                kwargs = {}
+
+            pillar_data = test_dict.get('pillar-data', {})
             if pillar_data:
-                if not kwargs:
-                    kwargs = {}
-                kwargs['pillar'] = pillar_data
+                kwargs.update({'pillar': pillar_data})
             else:
                 # make sure we clean pillar from previous test
-                if kwargs:
-                    kwargs.pop('pillar', None)
+                if 'pillar' in kwargs:
+                    kwargs.pop('pillar')
+
+            grain_data = test_dict.get('grain-data', {})
             if grain_data:
-                if not kwargs:
-                    kwargs = {}
-                kwargs['grain'] = grain_data
+                kwargs.update({'grain': grain_data})
             else:
                 # make sure we clean grain from previous test
-                if kwargs:
-                    kwargs.pop('grain', None)
+                if 'grain' in kwargs:
+                    kwargs.pop('grain')
 
             if mod_and_func in ["saltcheck.state_apply"]:
                 assertion = "assertNotEmpty"
